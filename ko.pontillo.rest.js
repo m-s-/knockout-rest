@@ -3,6 +3,7 @@ Extension library for Knockout.js
 ----------------------------------------------------------------------------------------------------------
 Author:
     Francesco Pontillo
+    Marco Silva (AMD)
 Description:
     The library implements classes and methods to access a RESTful service,
     GET, PUT, POST, DELETE for any resource.
@@ -37,33 +38,46 @@ License (MIT):
 	THE SOFTWARE.
 */
 
-// Base namespace
-ko.pontillo = function () { };
+(function (factory) {
+	// Module systems magic dance.
+
+	if (typeof require === "function" && typeof exports === "object" && typeof module === "object") {
+		// CommonJS or Node: hard-coded dependency on "knockout"
+		factory(require("knockout", "ko_mapping"), exports);
+	} else if (typeof define === "function" && define["amd"]) {
+		// AMD anonymous module with hard-coded dependency on "knockout" and "ko_mapping"
+		define(["knockout", "ko_mapping", "exports"], factory);
+	} else {
+		// <script> tag: use the global `ko` object, attaching a `pontillo` property (this maintains backwards compatibility)
+		factory(ko, ko.mapping, ko.pontillo = {});
+	}
+}(function (ko, kom, exports) {
+
 // Rest namespace
-ko.pontillo.rest = function () { };
+exports.rest = function () { };
 
 // Utils class
-ko.pontillo.rest.utils = new function () {
+exports.rest.utils = new function () {
     var self = this;
     // Sets an entity from a JSON string
     self.setFromJSON = function (object, JSON) {
-        self.setFromJS(object, ko.mapping.fromJSON(JSON));
+        self.setFromJS(object, kom.fromJSON(JSON));
     };
     // Sets an entity from a regular JS object
     self.setFromJS = function (object, JS) {
         // Set the new data
-        var d = ko.mapping.fromJS(JS);
+        var d = kom.fromJS(JS);
         // Set as observable
         if (object === undefined)
             object = ko.observable();
         // Makes every object into an observable
         if (!ko.isObservable(d)) d = ko.observable(d);
-        ko.pontillo.rest.utils.makeAllObservables(d);
+        exports.rest.utils.makeAllObservables(d);
         object(ko.isObservable(d) ? d() : d);
     };
     // Serializes an object to a JSON string
     self.toJSON = function (object) {
-        return ko.mapping.toJSON(object);
+        return kom.toJSON(object);
     };
     // Makes an observable's children observables on every level
     self.makeAllObservables = function (observable) {
@@ -84,14 +98,14 @@ ko.pontillo.rest.utils = new function () {
  *  Entity class, useful to map a REST object.
  *  When initalizing, pass an empty data model, it will be used to create new instances.
  */
-ko.pontillo.rest.entity = function (dataModel) {
+exports.rest.entity = function (dataModel) {
     // The main object
     var self = this;
     var newDataModel = dataModel;
     // Setting what to ignore
-    ko.mapping.defaultOptions().ignore = ["isUpdating", "isLoaded", "isGot", "isError", "__ko_mapping__"];
+    kom.defaultOptions().ignore = ["isUpdating", "isLoaded", "isGot", "isError", "__ko_mapping__"];
 
-    var item = ko.observable(ko.mapping.fromJS({}));
+    var item = ko.observable(kom.fromJS({}));
 
     // A few status observables
     item.isUpdating = ko.observable(false);
@@ -111,8 +125,8 @@ ko.pontillo.rest.entity = function (dataModel) {
         // Create the metadata
         var tracker = {};
         tracker.parent = object;
-        tracker.oldValue = ko.mapping.toJSON(object);
-        tracker.newValue = ko.mapping.toJSON(object);
+        tracker.oldValue = kom.toJSON(object);
+        tracker.newValue = kom.toJSON(object);
         tracker.changed = true;
         // Attach the metadata to the object
         object._tracker = tracker;
@@ -125,7 +139,7 @@ ko.pontillo.rest.entity = function (dataModel) {
         // Checks for changing in the model
         tracker.checkChanged = function () {
             var me = object._tracker;
-            this.newValue = ko.mapping.toJSON(object);
+            this.newValue = kom.toJSON(object);
             var res = ((this.newValue != this.oldValue) && (this.oldValue != undefined) && this.changed);
             if (res == true) this.changed == true;
             return res;
@@ -147,7 +161,7 @@ ko.pontillo.rest.entity = function (dataModel) {
             var me = object._tracker;
             if (me.newValue != me.oldValue) {
                 me.newValue = me.oldValue;
-                ko.pontillo.rest.utils.setFromJSON(object, me.oldValue);
+                exports.rest.utils.setFromJSON(object, me.oldValue);
             }
         };
         // Add a couple of utility functions to the observable object
@@ -165,7 +179,7 @@ ko.pontillo.rest.entity = function (dataModel) {
     // Updates the observable object (self) that contains the real data
     item.setData = function (data) {
         // Set the new data
-        ko.pontillo.rest.utils.setFromJS(item, data);
+        exports.rest.utils.setFromJS(item, data);
         // Add some metadata to track and restore
         item.setTracker(item);
         // Sets the content as loaded
@@ -174,7 +188,7 @@ ko.pontillo.rest.entity = function (dataModel) {
 
     // Gets the representation of the current resource as JSON
     item.toJSON = function () {
-        return ko.pontillo.rest.utils.toJSON(item);
+        return exports.rest.utils.toJSON(item);
     };
 
     // The GET method, reads an element from an URL and updates the model
@@ -312,3 +326,5 @@ ko.pontillo.rest.entity = function (dataModel) {
 
     return item;
 };
+
+}));

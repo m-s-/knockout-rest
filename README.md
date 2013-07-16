@@ -1,10 +1,12 @@
-Knockout-REST
+Knockout-REST [AMD compatible]
 =============
 
 **Knockout-REST** is a simple library to extend Knockout.js objects with RESTful actions.
 
 ###Author
 Francesco Pontillo
+###AMD compatibility
+Marco Silva
 
 ###Description:
 The library implements classes and methods to access a RESTful service,
@@ -21,6 +23,9 @@ Every entity:
 ###License:
 The library is released "as is", without any warranty nor promises.
 It is licensed under the MIT license.
+
+### Disclaimer
+Please remember that the AMD loading mechanism was only tested with RequireJS.
 
 ##Getting started
 Knockout-REST requires three libraries:
